@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天津 → 武汉 → 广州 · 八日南下</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+  background:#060609;
+  color:#e0d8cc;
+  overflow-x:hidden;
+  line-height:1.8;
+  transition:background 1.2s ease;
+}
+.ma{font-family:'Ma Shan Zheng','KaiTi','STKaiti',cursive}
+
+/* ═══ PARTICLES CANVAS ═══ */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+#route-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ═══ SECTIONS ═══ */
+section{position:relative;z-index:3}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:2rem;
+  position:relative;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(232,180,86,.06),transparent);
+}
+.hero-city-list{
+  display:flex;gap:1.2rem;align-items:center;
+  font-size:clamp(2.5rem,5vw,4rem);
+  flex-wrap:wrap;justify-content:center;
+}
+.hero-city-list .connector{font-size:.5em;color:#706860}
+.hero-city-list .city:nth-child(1){color:#e8b456}
+.hero-city-list .city:nth-child(3){color:#b86850}
+.hero-city-list .city:nth-child(5){color:#9b7058}
+.hero-subtitle{
+  margin-top:1.5rem;font-size:clamp(1rem,1.8vw,1.25rem);
+  color:#a09888;letter-spacing:.2em;
+}
+.hero-tags{
+  display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:2rem;
+}
+.hero-tag{
+  padding:.35rem 1.1rem;border:1px solid rgba(255,255,255,.06);
+  border-radius:20px;font-size:.8rem;color:#706860;
+  backdrop-filter:blur(4px);background:rgba(255,255,255,.02);
+}
+.scroll-hint{
+  position:absolute;bottom:3rem;
+  display:flex;flex-direction:column;align-items:center;gap:.6rem;
+  animation:float 2s ease-in-out infinite;
+}
+.scroll-hint span{font-size:.7rem;color:#706860;letter-spacing:.2em}
+.scroll-hint .arrow{font-size:1.3rem;color:#d4943a}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+
+/* ── CITY HEADER ── */
+.city-header{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:2rem;
+  position:relative;
+}
+.city-header .city-char{
+  font-size:clamp(6rem,15vw,14rem);line-height:1;
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;opacity:.12;
+}
+.city-header .city-name{
+  font-size:clamp(3rem,6vw,5rem);position:relative;z-index:1;
+  animation:titleGlow 3s ease-in-out infinite;
+}
+.city-header .city-days{font-size:1.1rem;color:#706860;margin-top:1rem;letter-spacing:.1em;position:relative;z-index:1}
+.city-header .city-desc{font-size:1.05rem;color:#a09888;margin-top:.6rem;position:relative;z-index:1;max-width:520px}
+@keyframes titleGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.15)}}
+
+/* ── CITY ATMOSPHERE OVERLAYS ── */
+.city-header::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(232,180,86,.08),transparent 70%);
+}
+.wuhan .city-header::before{
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(200,80,40,.1),transparent 70%);
+}
+
+/* ── DAY SECTION ── */
+.day-section{display:flex;justify-content:center;padding:4rem 2rem;position:relative;z-index:3}
+.day-inner{width:100%;max-width:1100px;display:flex;align-items:flex-start;gap:2rem;position:relative}
+.day-inner.right{flex-direction:row-reverse}
+.day-marker{flex-shrink:0;width:100px;text-align:right;padding-top:.5rem;position:sticky;top:6rem}
+.day-inner.right .day-marker{text-align:left}
+.day-marker .num{font-size:2.8rem;line-height:1}
+.day-marker .label{font-size:.8rem;color:#706860;margin-top:.3rem}
+
+/* ── DAY CARD ── */
+.day-card{
+  position:relative;z-index:1;
+  flex:1;max-width:580px;
+  background:rgba(16,14,12,.92);
+  border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:2.2rem 2.4rem;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3);
+  transition:transform .3s,box-shadow .3s,border-color .8s,background .8s;
+}
+.day-card:hover{transform:translateY(-3px);box-shadow:0 12px 44px rgba(0,0,0,.6),0 4px 14px rgba(0,0,0,.4)}
+/* 剪影 hover 联动：卡片边框泛金 + 外光晕 */
+.day-section:hover .day-inner .day-card{
+  border-color:rgba(210,155,40,.28);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.3),0 0 45px rgba(210,150,40,.15),0 0 80px rgba(180,120,25,.06);
+}
+.day-card::before{content:'';position:absolute;inset:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.025) 0%,transparent 60%);pointer-events:none}
+.day-card .card-title{
+  font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;padding-bottom:.9rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.day-card h3{
+  font-size:.7rem;font-weight:600;color:#706860;
+  letter-spacing:.12em;margin:1.5rem 0 .6rem;
+  padding-bottom:.4rem;border-bottom:1px solid rgba(255,255,255,.03);
+}
+.day-card h3:first-of-type{margin-top:0}
+.day-card p{font-size:1.02rem;color:#e0d8cc;margin-bottom:.5rem}
+.day-card .detail{font-size:.9rem;color:#a09888}
+
+/* ── FOOD ── */
+.food-block{
+  margin-top:1.8rem;padding:1.3rem 1.6rem;border-radius:14px;
+  border:1px solid rgba(255,255,255,.06);
+  transition:background .8s,border-color .8s;
+}
+.food-block .food-label{font-size:.7rem;font-weight:600;color:#706860;letter-spacing:.1em;margin-bottom:.6rem}
+.food-block .food-items{font-size:1rem;color:#e0d8cc;line-height:1.9}
+
+/* ── TRANSITION ── */
+.transition-card{display:flex;justify-content:center;padding:3rem 2rem;position:relative;z-index:3}
+.transition-inner{
+  max-width:500px;text-align:center;padding:2rem 2.5rem;
+  background:rgba(16,14,12,.7);
+  border:1px solid rgba(180,130,40,.12);
+  border-radius:16px;backdrop-filter:blur(8px);
+  box-shadow:0 0 50px rgba(180,130,40,.05),0 0 100px rgba(160,100,20,.02);
+}
+.transition-inner .train{font-size:1.8rem;margin-bottom:.6rem}
+.transition-inner .route{font-size:1.15rem;color:#e0d8cc}
+.transition-inner .detail{font-size:.9rem;color:#a09888;margin-top:.5rem}
+
+/* ── CITY THEMES ── */
+.tianjin .city-char{color:#d4943a}
+.tianjin .city-name{color:#e8b456;text-shadow:0 0 60px rgba(232,180,86,.2)}
+.tianjin .day-marker .num{color:#d4943a}
+.tianjin .day-card{border-color:rgba(232,180,86,.1)}
+.tianjin .food-block{background:rgba(232,180,86,.04);border-color:rgba(232,180,86,.08)}
+.tianjin h3{color:#d4943a}
+
+.wuhan .city-char{color:#b86850}
+.wuhan .city-name{color:#c87a4a;text-shadow:0 0 60px rgba(200,122,74,.25)}
+.wuhan .day-marker .num{color:#c87a4a}
+.wuhan .day-card{background:rgba(18,12,10,.92);border-color:rgba(200,122,74,.12)}
+.wuhan .food-block{background:rgba(200,122,74,.05);border-color:rgba(200,122,74,.1)}
+.wuhan h3{color:#c87a4a}
+
+.guangzhou .city-char{color:#9b7058}
+.guangzhou .city-name{color:#9b7058}
+
+/* ── END ── */
+.end-section{
+  min-height:80vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:4rem 2rem;
+  position:relative;
+}
+.end-city-char{
+  font-size:clamp(6rem,15vw,14rem);line-height:1;
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;opacity:.1;
+}
+.end-title{font-size:clamp(2rem,4vw,3rem);font-weight:300;position:relative;z-index:1}
+.end-title strong{font-weight:700}
+.end-subtitle{font-size:1.15rem;color:#a09888;margin-top:1rem;position:relative;z-index:1}
+.stats-row{
+  display:flex;gap:3rem;margin-top:3rem;flex-wrap:wrap;
+  justify-content:center;position:relative;z-index:1;
+}
+.stat-item{text-align:center}
+.stat-item .stat-num{
+  font-size:2.5rem;font-weight:900;
+  animation:numGlow 3s ease-in-out infinite;
+  animation-delay:calc(var(--i,0)*.2s);
+}
+.stat-item:nth-child(1) .stat-num{color:#e8b456}
+.stat-item:nth-child(3) .stat-num{color:#c87a4a}
+.stat-item:nth-child(5) .stat-num{color:#9b7058}
+.stat-item:nth-child(7) .stat-num{color:#a09888}
+.stat-item .stat-label{font-size:.8rem;color:#706860;margin-top:.3rem;letter-spacing:.1em}
+.stat-divider{width:1px;background:rgba(255,255,255,.06);align-self:stretch}
+@keyframes numGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+
+/* ── SCROLL ANIMATION ── */
+.reveal{transform:translateY(40px);transition:transform .7s ease-out}
+.reveal.visible{transform:translateY(0)}
+.reveal-left{transform:translateX(-40px);transition:transform .7s ease-out}
+.reveal-left.visible{transform:translateX(0)}
+.reveal-right{transform:translateX(40px);transition:transform .7s ease-out}
+.reveal-right.visible{transform:translateX(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .route-line{left:16px;width:3px}
+  .day-inner,.day-inner.right{flex-direction:column;gap:1rem}
+  .day-marker{width:auto;text-align:left!important;position:static;display:flex;align-items:baseline;gap:.8rem}
+  .day-inner.right .day-marker{align-self:flex-end;text-align:right!important}
+  .day-card{max-width:100%;padding:1.5rem;position:relative;overflow:hidden}
+  .day-card .card-title,.day-card h3,.day-card p{position:relative;z-index:1}
+  .day-section{padding:2.5rem 1rem}
+  .stats-row{gap:1.5rem}.stat-divider{display:none}
+  .transition-inner{padding:1.2rem 1.5rem}
+  #city-dots{right:10px;gap:16px}
+  #city-dots .city-dot{width:32px;height:32px}
+  #back-to-top{right:12px;bottom:20px;width:36px;height:36px;font-size:1rem}
+  .card-silhouette{display:flex;position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.11;visibility:visible;top:0;border-radius:20px}
+  .card-silhouette svg{width:55%;height:55%}
+  .card-silhouette.revealed{opacity:.15}
+}
+
+/* ── PROGRESS BAR ── */
+#progress-bar{
+  position:fixed;top:0;left:0;height:2px;z-index:200;pointer-events:none;
+  background:linear-gradient(90deg,#e8b456,#c87a4a,#9b7058);
+  width:0;transition:width .15s linear;
+}
+
+/* ── CITY INDICATOR BADGES ── */
+#city-dots{
+  position:fixed;right:18px;top:50%;transform:translateY(-50%);
+  z-index:100;display:flex;flex-direction:column;gap:22px;
+}
+#city-dots .city-dot{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  background:rgba(10,8,6,.75);
+  border:2px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:all .5s ease;
+  position:relative;
+}
+#city-dots .city-dot::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  opacity:0;transition:opacity .5s ease;
+  pointer-events:none;
+}
+#city-dots .city-dot .dot-char{
+  font-size:1.1rem;font-weight:700;color:rgba(255,255,255,.45);
+  transition:all .5s ease;line-height:1;
+  filter:drop-shadow(0 0 0 transparent);
+}
+#city-dots .city-dot:hover{
+  border-color:rgba(255,255,255,.25);
+  transform:scale(1.12);
+}
+#city-dots .city-dot:hover .dot-char{color:rgba(255,255,255,.75)}
+/* Tianjin active */
+#city-dots .city-dot.active{
+  border-color:rgba(232,180,86,.5);
+  box-shadow:0 0 20px rgba(232,180,86,.35),0 0 40px rgba(232,180,86,.08);
+}
+#city-dots .city-dot.active::after{
+  opacity:1;
+  box-shadow:inset 0 0 14px rgba(232,180,86,.12);
+}
+#city-dots .city-dot.active .dot-char{
+  color:#e8b456;
+  text-shadow:0 0 12px rgba(232,180,86,.7);
+}
+/* Wuhan active */
+#city-dots .city-dot.wuhan-active{
+  border-color:rgba(200,122,74,.5);
+  box-shadow:0 0 20px rgba(200,122,74,.35),0 0 40px rgba(200,122,74,.08);
+}
+#city-dots .city-dot.wuhan-active::after{
+  opacity:1;
+  box-shadow:inset 0 0 14px rgba(200,122,74,.12);
+}
+#city-dots .city-dot.wuhan-active .dot-char{
+  color:#c87a4a;
+  text-shadow:0 0 12px rgba(200,122,74,.7);
+}
+/* Guangzhou active */
+#city-dots .city-dot.gz-active{
+  border-color:rgba(155,112,88,.5);
+  box-shadow:0 0 20px rgba(155,112,88,.35),0 0 40px rgba(155,112,88,.08);
+}
+#city-dots .city-dot.gz-active::after{
+  opacity:1;
+  box-shadow:inset 0 0 14px rgba(155,112,88,.12);
+}
+#city-dots .city-dot.gz-active .dot-char{
+  color:#9b7058;
+  text-shadow:0 0 12px rgba(155,112,88,.7);
+}
+
+/* ── CARD SILHOUETTE (gold metal, tilted, behind card, dramatic FX) ── */
+.card-silhouette{
+  position:absolute;z-index:-1;pointer-events:none;
+  top:-5%;width:clamp(360px,40vw,520px);height:110%;
+  display:flex;align-items:center;justify-content:center;
+  background:none;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  opacity:0;visibility:hidden;
+  transition:opacity .3s ease,transform .5s cubic-bezier(.18,.1,.08,1);
+}
+.card-silhouette.revealed{
+  opacity:1;visibility:visible;
+}
+
+/* ✦ Gold star-burst sparkles — XL, luminous, show-stopping */
+.card-silhouette::before{
+  content:'';
+  position:absolute;
+  top:8%;left:6%;
+  width:10px;height:10px;
+  border-radius:50%;
+  background:rgba(255,252,230,.98);
+  box-shadow:
+    /* ═══ 星芒 1 (锚点·左上) ═══ */
+    0 28px 0 rgba(255,240,150,.95),
+    0 -28px 0 rgba(255,240,150,.95),
+    28px 0 0 rgba(255,240,150,.95),
+    -28px 0 0 rgba(255,240,150,.95),
+    20px 20px 0 rgba(255,210,80,.7),
+    -20px -20px 0 rgba(255,210,80,.7),
+    20px -20px 0 rgba(255,210,80,.7),
+    -20px 20px 0 rgba(255,210,80,.7),
+    /* ═══ 星芒 2 (右上) ═══ */
+    320px 15px 0 rgba(255,252,230,.95),
+    320px 43px 0 rgba(255,240,150,.9),
+    320px -13px 0 rgba(255,240,150,.9),
+    348px 15px 0 rgba(255,240,150,.9),
+    292px 15px 0 rgba(255,240,150,.9),
+    340px 35px 0 rgba(255,210,80,.6),
+    300px 35px 0 rgba(255,210,80,.6),
+    340px -5px 0 rgba(255,210,80,.6),
+    300px -5px 0 rgba(255,210,80,.6),
+    /* ═══ 星芒 3 (中下) ═══ */
+    180px 300px 0 rgba(255,252,230,.9),
+    180px 328px 0 rgba(255,240,150,.85),
+    180px 272px 0 rgba(255,240,150,.85),
+    208px 300px 0 rgba(255,240,150,.85),
+    152px 300px 0 rgba(255,240,150,.85),
+    200px 320px 0 rgba(255,210,80,.55),
+    160px 320px 0 rgba(255,210,80,.55),
+    200px 280px 0 rgba(255,210,80,.55),
+    160px 280px 0 rgba(255,210,80,.55),
+    /* ═══ 散落大光斑 (纯亮圆) ═══ */
+    100px 140px 0 8px rgba(255,240,150,.7),
+    350px 220px 0 6px rgba(255,230,130,.6),
+    60px 340px 0 10px rgba(255,240,150,.55);
+  filter:blur(.5px) drop-shadow(0 0 10px rgba(255,190,50,.7));
+  animation: starBurst 2s linear infinite;
+  z-index:5;pointer-events:none;
+}
+/* 左卡镜像：星芒偏右（x偏移全部取反，锚点换到右边） */
+.day-inner:not(.right) .card-silhouette::before{
+  left:auto;right:6%;
+  box-shadow:
+    0 28px 0 rgba(255,240,150,.95),
+    0 -28px 0 rgba(255,240,150,.95),
+    -28px 0 0 rgba(255,240,150,.95),
+    28px 0 0 rgba(255,240,150,.95),
+    -20px 20px 0 rgba(255,210,80,.7),
+    20px -20px 0 rgba(255,210,80,.7),
+    -20px -20px 0 rgba(255,210,80,.7),
+    20px 20px 0 rgba(255,210,80,.7),
+    -320px 15px 0 rgba(255,252,230,.95),
+    -320px 43px 0 rgba(255,240,150,.9),
+    -320px -13px 0 rgba(255,240,150,.9),
+    -348px 15px 0 rgba(255,240,150,.9),
+    -292px 15px 0 rgba(255,240,150,.9),
+    -340px 35px 0 rgba(255,210,80,.6),
+    -300px 35px 0 rgba(255,210,80,.6),
+    -340px -5px 0 rgba(255,210,80,.6),
+    -300px -5px 0 rgba(255,210,80,.6),
+    -180px 300px 0 rgba(255,252,230,.9),
+    -180px 328px 0 rgba(255,240,150,.85),
+    -180px 272px 0 rgba(255,240,150,.85),
+    -208px 300px 0 rgba(255,240,150,.85),
+    -152px 300px 0 rgba(255,240,150,.85),
+    -200px 320px 0 rgba(255,210,80,.55),
+    -160px 320px 0 rgba(255,210,80,.55),
+    -200px 280px 0 rgba(255,210,80,.55),
+    -160px 280px 0 rgba(255,210,80,.55),
+    -100px 140px 0 8px rgba(255,240,150,.7),
+    -350px 220px 0 6px rgba(255,230,130,.6),
+    -60px 340px 0 10px rgba(255,240,150,.55);
+}
+@keyframes starBurst{
+  0%{opacity:.55;transform:scale(.82)}
+  50%{opacity:1;transform:scale(1.18)}
+  100%{opacity:.55;transform:scale(.82)}
+}
+
+/* Gold dust field + ambient glow */
+.card-silhouette::after{
+  content:'';
+  position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:
+    /* 巨型光斑 (core+halo) */
+    radial-gradient(14px 14px at 8% 16%, rgba(255,252,220,1) 20%, rgba(255,210,60,.45) 55%, transparent),
+    radial-gradient(18px 18px at 74% 20%, rgba(255,245,160,.95) 20%, rgba(255,195,50,.35) 55%, transparent),
+    radial-gradient(12px 12px at 40% 65%, rgba(255,252,220,.95) 20%, rgba(255,210,60,.35) 55%, transparent),
+    radial-gradient(20px 20px at 82% 55%, rgba(255,245,160,.9) 20%, rgba(255,195,50,.3) 55%, transparent),
+    radial-gradient(10px 10px at 52% 12%, rgba(255,252,220,.95) 20%, rgba(255,210,60,.38) 55%, transparent),
+    radial-gradient(16px 16px at 25% 50%, rgba(255,245,160,.85) 20%, rgba(255,195,50,.28) 55%, transparent),
+    /* 中光点 */
+    radial-gradient(5px 5px at 22% 32%, rgba(255,248,190,.95) 50%, transparent),
+    radial-gradient(6px 6px at 60% 38%, rgba(255,215,110,.9) 50%, transparent),
+    radial-gradient(5px 5px at 16% 58%, rgba(255,245,170,.9) 50%, transparent),
+    radial-gradient(6px 6px at 70% 68%, rgba(255,205,90,.9) 50%, transparent),
+    radial-gradient(5px 5px at 46% 48%, rgba(255,248,190,.85) 50%, transparent),
+    radial-gradient(6px 6px at 88% 30%, rgba(255,215,110,.85) 50%, transparent),
+    radial-gradient(5px 5px at 33% 80%, rgba(255,245,170,.8) 50%, transparent),
+    radial-gradient(6px 6px at 62% 78%, rgba(255,205,90,.85) 50%, transparent),
+    /* 小金粉 */
+    radial-gradient(3px 3px at 65% 8%, rgba(255,252,210,.95) 50%, transparent),
+    radial-gradient(3px 3px at 12% 42%, rgba(255,235,150,.85) 50%, transparent),
+    radial-gradient(3px 3px at 50% 75%, rgba(255,252,210,.9) 50%, transparent),
+    radial-gradient(3px 3px at 78% 78%, rgba(255,235,150,.8) 50%, transparent),
+    radial-gradient(3px 3px at 28% 10%, rgba(255,252,210,.85) 50%, transparent),
+    radial-gradient(3px 3px at 56% 58%, rgba(255,235,150,.8) 50%, transparent),
+    radial-gradient(3px 3px at 92% 50%, rgba(255,252,210,.8) 50%, transparent),
+    radial-gradient(3px 3px at 38% 22%, rgba(255,235,150,.75) 50%, transparent),
+    /* 底层柔光 */
+    radial-gradient(ellipse 85% 70% at 50% 50%, rgba(255,195,45,.18), transparent 60%);
+  animation: dustPulse 2.5s linear infinite;
+}
+@keyframes dustPulse{
+  0%{opacity:.6}
+  50%{opacity:1}
+  100%{opacity:.6}
+}
+
+/* Card-on-right (壹叁肆陆捌) → tilt in from LEFT */
+.day-inner.right .card-silhouette{
+  right:102%;left:auto;margin-right:.5rem;
+  transform:rotate(-8deg) translateX(-70px);
+}
+/* Card-on-left (贰伍柒) → tilt in from RIGHT */
+.day-inner:not(.right) .card-silhouette{
+  left:102%;right:auto;margin-left:.5rem;
+  transform:rotate(8deg) translateX(70px);
+}
+/* Revealed: slide in while staying tilted */
+.day-inner.right .card-silhouette.revealed{
+  transform:rotate(-8deg) translateX(0);
+}
+.day-inner:not(.right) .card-silhouette.revealed{
+  transform:rotate(8deg) translateX(0);
+}
+
+.card-silhouette svg{
+  width:92%;height:92%;
+  filter:
+    drop-shadow(0 0 3px rgba(255,252,220,1))
+    drop-shadow(0 0 8px rgba(245,200,65,.8))
+    drop-shadow(0 0 18px rgba(220,165,40,.5))
+    drop-shadow(0 0 36px rgba(190,140,30,.3))
+    drop-shadow(0 0 55px rgba(160,110,20,.15))
+    drop-shadow(0 4px 6px rgba(80,45,10,.55));
+}
+.card-silhouette svg *{fill:url(#metal-grad);stroke:#c49820}
+.card-silhouette svg [fill="none"]{fill:none}
+
+/* ── BACK TO TOP ── */
+#back-to-top{
+  position:fixed;bottom:32px;right:28px;z-index:100;
+  width:42px;height:42px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(16,14,12,.7);backdrop-filter:blur(8px);
+  color:#a09888;font-size:1.3rem;cursor:pointer;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .4s,transform .4s,background .3s,border-color .3s;
+  pointer-events:none;
+}
+#back-to-top.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#back-to-top:hover{background:rgba(24,20,16,.85);border-color:rgba(255,255,255,.15);color:#e0d8cc}
+
+/* ── COUNT-UP ANIMATION ── */
+.stat-num{opacity:1}
+.count-popped{animation:countPop .55s cubic-bezier(.25,.1,.25,1)}
+@keyframes countPop{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.5)}
+  70%{transform:scale(.92)}
+  100%{transform:scale(1)}
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<canvas id="route-canvas"></canvas>
+
+<!-- ═══ PROGRESS BAR ═══ -->
+<div id="progress-bar"></div>
+
+<!-- ═══ CITY INDICATOR DOTS ═══ -->
+<div id="city-dots">
+  <div class="city-dot" data-city="tianjin"><span class="dot-char">津</span></div>
+  <div class="city-dot" data-city="wuhan"><span class="dot-char">汉</span></div>
+  <div class="city-dot" data-city="guangzhou"><span class="dot-char">穗</span></div>
+</div>
+
+<!-- ═══ CITY SILHOUETTE ═══ -->
+<div id="city-silhouette" style="display:none">
+  <!-- 天津 · 解放桥 + 世纪钟 -->
+  <svg class="silhouette tj-sil" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+    <rect x="90" y="180" width="22" height="220" rx="3"/>
+    <rect x="288" y="180" width="22" height="220" rx="3"/>
+    <rect x="30" y="350" width="340" height="12" rx="2"/>
+    <line x1="101" y1="180" x2="30" y2="350" stroke-width="2.5"/>
+    <line x1="101" y1="180" x2="170" y2="350" stroke-width="2.5"/>
+    <line x1="299" y1="180" x2="230" y2="350" stroke-width="2.5"/>
+    <line x1="299" y1="180" x2="370" y2="350" stroke-width="2.5"/>
+    <circle cx="299" cy="150" r="22" fill="none" stroke-width="4"/>
+    <line x1="299" y1="128" x2="299" y2="172" stroke-width="2.5"/>
+    <line x1="277" y1="150" x2="321" y2="150" stroke-width="2.5"/>
+    <circle cx="299" cy="150" r="6"/>
+    <rect x="85" y="395" width="230" height="8" rx="2" opacity=".5"/>
+  </svg>
+  <!-- 武汉 · 黄鹤楼 -->
+  <svg class="silhouette wh-sil" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+    <rect x="70" y="410" width="260" height="14" rx="2"/>
+    <polygon points="90,300 180,312 220,312 310,300 285,380 115,380" opacity=".85"/>
+    <polygon points="115,210 185,222 215,222 285,210 260,300 140,300" opacity=".85"/>
+    <polygon points="135,140 190,150 210,150 265,140 248,210 152,210" opacity=".85"/>
+    <polygon points="155,80 195,88 205,88 245,80 235,140 165,140" opacity=".85"/>
+    <rect x="193" y="30" width="14" height="50" rx="2"/>
+    <polygon points="200,5 186,30 214,30"/>
+    <ellipse cx="200" cy="380" rx="140" ry="10" opacity=".25"/>
+  </svg>
+  <!-- 广州 · 广州塔 -->
+  <svg class="silhouette gz-sil" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+    <path d="M168,80 Q200,230 155,330 Q130,400 168,455 L232,455 Q270,400 245,330 Q200,230 232,80 Z" opacity=".85"/>
+    <rect x="197" y="20" width="6" height="65" rx="1"/>
+    <ellipse cx="200" cy="330" rx="30" ry="6" fill="none" stroke-width="3.5"/>
+    <ellipse cx="200" cy="130" rx="38" ry="9" opacity=".45"/>
+    <ellipse cx="200" cy="455" rx="55" ry="7" opacity=".3"/>
+    <line x1="200" y1="28" x2="200" y2="8" stroke-width="2" opacity=".6"/>
+  </svg>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-city-list ma">
+    <span class="city">天津</span><span class="connector">→</span>
+    <span class="city">武汉</span><span class="connector">→</span>
+    <span class="city">广州</span>
+  </div>
+  <p class="hero-subtitle">八日南下慢旅行</p>
+  <div class="hero-tags">
+    <span class="hero-tag">市区慢逛</span><span class="hero-tag">不爬山</span>
+    <span class="hero-tag">在地美食</span><span class="hero-tag">烟火气</span>
+    <span class="hero-tag">每段火车 ≤ 5h</span>
+  </div>
+  <div class="scroll-hint"><span>往下翻</span><div class="arrow">↓</div></div>
+</section>
+
+<!-- ═══ TIANJIN ═══ -->
+<section class="city-header tianjin">
+  <div class="city-char ma">津</div>
+  <div class="city-name ma">天 津</div>
+  <div class="city-days">Day 1 — 3</div>
+  <div class="city-desc">北方老港，百年租界，相声茶馆里的烟火人间</div>
+</section>
+
+<div class="day-section tianjin">
+  <div class="day-inner right">
+    <div class="day-marker reveal-left"><div class="num ma">壹</div><div class="label">抵达</div></div>
+    <div class="day-card reveal-right">
+      <div class="card-title">抵达天津 · 卸下行囊</div>
+      <h3>📍 初识</h3>
+      <p>走下高铁，空气是北方的干爽。放下行李推开窗——天津的傍晚不像南方那样湿热黏稠，风里有炒栗子和油炸面糊的香味，干燥、利落，像北方人的脾气。</p>
+      <h3>🏛 古文化街</h3>
+      <p>天妃宫前的石板路被磨得光滑。泥人张的彩塑娃娃摆在玻璃柜里，每一尊眼神都不一样；杨柳青的年画摊开整面墙，胖娃娃抱鲤鱼、门神瞪圆眼，红绿撞色亮得晃眼。老街不长，但每一家铺子都能让你站住——剪纸、风筝魏、鼻烟壶内画——像一条压缩了六百年的北方手艺人走廊。</p>
+      <p class="detail">傍晚沿着海河走，解放桥的铁架在暮色中像一座黑色的剪纸。河水裹着两岸灯火缓缓流过，远处世纪钟敲响报时。</p>
+      <div class="food-block">
+        <div class="food-label">🍽 第一口天津</div>
+        <div class="food-items">
+          <strong>煎饼果子</strong> — 绿豆面在铁板上转一圈摊开，磕鸡蛋、撒葱花、翻面、夹脆饼、刷面酱甜酱辣椒——整套动作行云流水不超过两分钟。咬一口：外皮韧、脆饼酥、酱香冲鼻。<br>
+          <strong>耳朵眼炸糕</strong> — 外皮炸到金黄酥脆，咬开是滚烫的红豆沙，流心质地，甜而不腻。
+        </div>
+      </div>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-tj-1"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="day-section tianjin">
+  <div class="day-inner">
+    <div class="day-marker reveal-right" style="text-align:right"><div class="num ma">贰</div><div class="label">烟火</div></div>
+    <div class="day-card reveal-left">
+      <div class="card-title">津门烟火 · 老城与新韵</div>
+      <h3>📍 五大道</h3>
+      <p>一个上午走完五大道——英法德意各式洋楼在梧桐树荫下排开，红砖、灰砖、花岗岩，尖顶拱门、老虎窗、铸铁阳台——像一整条被人遗忘的欧洲建筑博览街。阳光从梧桐叶缝隙筛下来，斑斑点点洒在百年前的砖墙上。恍惚间像走在欧洲某座老城，但抬头是纯粹的中国北方天空。</p>
+      <h3>📍 瓷房子 & 意风区</h3>
+      <p>整栋法式洋楼的墙面、屋檐、门框嵌满碎瓷片。数亿片古瓷、水晶、玛瑙密密匝匝铺满每一个平面。下午在意大利风情区的露天咖啡馆坐下，看本地人遛狗、下棋——在百年殖民建筑下过着普通的生活，节奏突然就慢了。</p>
+      <div class="food-block">
+        <div class="food-label">🍽 午晚饭 & 夜间节目</div>
+        <div class="food-items">
+          <strong>狗不理包子</strong> — 十八个褶子均匀整齐，咬开一包鲜汤。<br>
+          <strong>十八街麻花</strong> — 酥脆甜香，嚼起来咔嚓响。<br>
+          🌙 <strong>名流茶馆相声</strong> — 晚场听现场相声。包袱更密、话更野、台上台下互相接茬。两小时飞快过去，出门腮帮子酸了。
+        </div>
+      </div>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-tj-2"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="day-section tianjin">
+  <div class="day-inner right">
+    <div class="day-marker reveal-left"><div class="num ma">叁</div><div class="label">告别</div></div>
+    <div class="day-card reveal-right">
+      <div class="card-title">告别天津 · 南下列车</div>
+      <h3>📍 海河晨光</h3>
+      <p>最后一个上午留给海河。晨光里走过解放桥——百年铁桥的铆钉和钢梁摸上去有温度。桥下的水安静地往东流，不急。世纪钟广场上鸽子咕咕叫着，有人架着收音机听京戏。天津用它最松弛的样子和你告别。</p>
+      <div class="food-block">
+        <div class="food-label">🍽 收官宴</div>
+        <div class="food-items">
+          <strong>罾蹦鲤鱼</strong> — 整条活鲤鱼直接下油锅，炸到骨头都酥了，浇上糖醋汁。上桌时鱼嘴还张着、鱼身弓起像还在蹦。<br>
+          <strong>八珍豆腐</strong> — 嫩豆腐配海参、鱿鱼、虾仁、蹄筋、香菇、笋片，浓芡裹着，一勺下去什么都有。<br>
+          <strong>嘎巴菜</strong> — 绿豆面薄饼切条浇素卤配芝麻酱辣油，天津人从小吃到大的，出了天津就没有了。
+        </div>
+      </div>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-tj-3"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="transition-card">
+  <div class="transition-inner reveal">
+    <div class="train">🚂</div>
+    <div class="route">天津 → 武汉 · 高铁约 5 小时</div>
+    <div class="detail">华北平原的落日从车窗外流淌过去 · 车上便当 · 耳机里放着老歌</div>
+  </div>
+</div>
+
+<!-- ═══ WUHAN ═══ -->
+<section class="city-header wuhan" id="wuhan-header">
+  <div class="city-char ma">汉</div>
+  <div class="city-name ma">武 汉</div>
+  <div class="city-days">Day 4 — 8</div>
+  <div class="city-desc">九省通衢，江湖之城，把吃早饭叫「过早」的城市</div>
+</section>
+
+<div class="day-section wuhan">
+  <div class="day-inner right">
+    <div class="day-marker reveal-left"><div class="num ma">肆</div><div class="label">初见</div></div>
+    <div class="day-card reveal-right">
+      <div class="card-title">抵达武汉 · 江湖暖风</div>
+      <h3>📍 初探江城</h3>
+      <p>列车跨过长江大桥时窗外豁然开朗——黄绿分明的江水浩荡东去，江面宽得不像河。空气跟北方的干燥完全不同，江风里带着湿润的土腥味，混着热干面芝麻酱的香——还没下车，气味已经告诉你到了哪里。</p>
+      <p>安顿下来后去江汉路步行街散步。百年租界老建筑外墙的浮雕、铁艺阳台、罗马柱还留着。霓虹灯亮起来的时候，一百年前的洋楼和一百年后的招牌叠在一起，有一种混乱的迷人。</p>
+      <div class="food-block">
+        <div class="food-label">🍜 夜探吉庆街</div>
+        <div class="food-items">
+          <strong>鸭脖</strong> — 辣味慢慢上来——第一口只觉得香，嚼到第三根时舌尖发麻嘴唇也红了，手停不下来。骨头缝里的肉最入味。路边摊的藕汤在小火炉上咕嘟了一整天，汤色奶白，藕块粉糯。
+        </div>
+      </div>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-wh-1"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="day-section wuhan">
+  <div class="day-inner">
+    <div class="day-marker reveal-right" style="text-align:right"><div class="num ma">伍</div><div class="label">烟火</div></div>
+    <div class="day-card reveal-left">
+      <div class="card-title">过早宇宙 · 黄鹤楼远眺</div>
+      <h3>🍜 过早 — 户部巷</h3>
+      <p>武汉人管吃早饭叫「过早」——不是敷衍地填肚子，是一条街从头吃到尾的认真仪式。天刚亮钻进户部巷，蒸汽从每一家铺子里涌出来，整条街笼罩在白雾和芝麻酱的香味里。</p>
+      <p><strong>热干面</strong> — 碱面焯到刚熟沥干，一大勺芝麻酱浇上去，手腕一翻拌匀，每一根面裹满酱汁，萝卜丁点睛。<br>
+      <strong>三鲜豆皮</strong> — 绿豆米浆摊成薄皮，铺糯米香菇肉丁香干，双面煎到金黄。外皮酥脆糯米软糯，过早终极武器。<br>
+      <strong>糊汤粉</strong> — 鲫鱼熬白汤，细粉吸饱汤汁，冬天早上来一碗热气蒸得眼镜起雾。<br>
+      <strong>面窝</strong> — 米浆圈炸到外酥里嫩，中间脆边沿软。<br>
+      <strong>蛋酒</strong> — 滚水冲蛋花加米酒，过早标配收尾，甜滋滋从喉咙暖到胃。</p>
+      <h3>📍 黄鹤楼</h3>
+      <p>登蛇山。黄鹤楼立在蛇山之巅，俯瞰长江和汉江交汇。站上去才明白为什么从崔颢到李白、从白居易到毛泽东，几千年来文人墨客把最好的句子都给了它——江面太开阔了，货船缓缓驶过，风从江面吹来带着水的腥味和远方的凉意。天下第一楼，见过了才服气。</p>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-wh-2"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="day-section wuhan">
+  <div class="day-inner right">
+    <div class="day-marker reveal-left"><div class="num ma">陆</div><div class="label">楚韵</div></div>
+    <div class="day-card reveal-right">
+      <div class="card-title">楚风汉韵 · 博物馆与湖</div>
+      <h3>📍 湖北省博物馆</h3>
+      <p>曾侯乙编钟——三排六十四件青铜编钟，两千四百年前的乐器，至今还能演奏。站在它前面你会安静下来——不是敬畏，是被时间压住了。编钟的铜绿泛着暗沉的青黑色，大的比人高，小的像茶杯。想象战国贵族宴饮时钟鸣鼎食的场景——那声音穿过两千四百年还在响。</p>
+      <p class="detail">越王勾践剑在另一个展厅。剑身的菱形暗纹在展柜灯下依然冷冽。两千多年，没锈。</p>
+      <h3>📍 东湖绿道</h3>
+      <p>从听涛景区出发沿绿道骑行。东湖是西湖的六倍大——不是湖，是一片海被搬进城市。骑行道两边是水杉林和芦苇荡，湖风灌满衬衫。骑到磨山脚下停下来，看白鹭掠过水面，落雁岛在波光里像水墨画。傍晚湖面变成玫瑰金色——这是武汉人每天的日常，对外来的人来说奢侈得不像话。</p>
+      <p class="detail">晚上汉街灯光亮起来像一条发光的河，手里一杯奶茶慢悠悠晃回住处。</p>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-wh-3"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="day-section wuhan">
+  <div class="day-inner">
+    <div class="day-marker reveal-right" style="text-align:right"><div class="num ma">柒</div><div class="label">漫步</div></div>
+    <div class="day-card reveal-left">
+      <div class="card-title">江城漫步 · 桥与街</div>
+      <h3>📍 长江大桥 & 轮渡</h3>
+      <p>走上万里长江第一桥——脚下滔滔江水，火车从下层轰隆隆穿过，整座桥微微震动。走到正中间站住，看汉江汇入长江——两条江水颜色不同，清浊交界分明，在阳光下像一幅墨和土黄调的抽象画。</p>
+      <p class="detail">从中华路坐轮渡到江汉关，两块钱。甲板上江风把头发吹乱。两岸天际线在波光中晃动——长江不是景点，是这座城市的血管。</p>
+      <h3>📍 黎黄陂路</h3>
+      <p>被称为"街头博物馆"。百年租界老建筑群里藏着咖啡店、买手店、独立书店。随便拐进一条巷子，墙上爬满爬山虎，红砖墙在午后阳光里像胶片照片。找一家二楼小咖啡馆坐下，窗外梧桐叶沙沙响。</p>
+      <div class="food-block">
+        <div class="food-label">🦞 万松园 · 潜江小龙虾</div>
+        <div class="food-items">
+          <strong>油焖大虾</strong> — 红油花椒豆瓣蒜瓣一起焖，虾壳红得发亮。剥开虾头虾黄饱满金灿；虾肉弹牙，蘸锅底油汁再送进嘴里，辣和鲜在舌尖同时炸开。<br>
+          <strong>蒜蓉虾</strong> — 厚厚一层蒜蓉清蒸，蒜香钻进每一丝虾肉。吃完用剩蒜蓉拌面——武汉人管这叫"收汁"，是小龙虾的真正高潮。
+        </div>
+      </div>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-wh-4"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="day-section wuhan">
+  <div class="day-inner right">
+    <div class="day-marker reveal-left"><div class="num ma">捌</div><div class="label">归途</div></div>
+    <div class="day-card reveal-right">
+      <div class="card-title">归途序章 · 禅意与告别</div>
+      <h3>📍 归元寺</h3>
+      <p>最后一天上午去归元寺。香火缭绕。五百罗汉堂按自己的年龄数罗汉——数到哪一尊就是本命罗汉。说不清是不是真的准，但数的时候心里意外地安静。指尖划过罗汉像，数到年龄的那一刻抬头看他的表情——有的笑、有的怒、有的沉思。你站很久，心里有一个只有自己知道的念头。</p>
+      <h3>📍 古德寺</h3>
+      <p class="detail">武汉独一份——汉传佛教的寺庙却长了东南亚混血面孔：圆顶、拱门、科林斯柱、孔雀浮雕。在长江边的中国城市里撞见缅甸风格的佛寺，魔幻又迷人。院子里僧人在扫地，鸽子停在塔尖上，安静得不像在市区。</p>
+      <div class="food-block">
+        <div class="food-label">🍽 离别宴</div>
+        <div class="food-items">
+          <strong>武昌鱼</strong> — 「才饮长沙水，又食武昌鱼。」清蒸武昌鱼肉质细嫩如豆腐，筷子一碰就散开，葱姜酱油的简单调味最见功夫。<br>
+          <strong>排骨藕汤</strong> — 湖北粉藕炖到筷子轻轻一夹就断、入口即化。奶白汤面飘着葱花，武汉人家里最暖的一碗。<br>
+          <strong>洪山菜薹</strong> — 紫红色薹茎炒腊肉，脆嫩中带清甜。出了洪山就不是这个味了。
+        </div>
+      </div>
+      <div class="card-silhouette"><svg viewBox="0 0 400 500"><use href="#sil-wh-5"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<div class="transition-card">
+  <div class="transition-inner reveal">
+    <div class="train">🚂</div>
+    <div class="route">武汉 → 广州南 · 高铁约 4 小时</div>
+    <div class="detail">窗外风景倒退 · 八天在脑海里倒带 · 快到家了</div>
+  </div>
+</div>
+
+<!-- ═══ GUANGZHOU ═══ -->
+<section class="end-section guangzhou" id="guangzhou-end">
+  <div class="end-city-char ma">穗</div>
+  <div class="end-title"><strong>广州</strong> · 终点站</div>
+  <div class="end-subtitle">抵达广州南站 · 到家了</div>
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">座城市</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-num">8</div><div class="stat-label">天夜</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-num">3</div><div class="stat-label">段铁路</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-num">~3,000</div><div class="stat-label">公里</div></div>
+  </div>
+  <p style="margin-top:3.5rem;font-size:1.25rem;color:#e0d8cc">天津 → 武汉 → 广州 · 跨越半个中国 · 圆满到家 ✨</p>
+  <p style="margin-top:1.2rem;font-size:.85rem;color:#706860;letter-spacing:.15em">市区慢逛 · 在地美食 · 不赶景点不爬山 · 每段火车不超过五小时</p>
+</section>
+
+<!-- ═══ BACK TO TOP ═══ -->
+<button id="back-to-top" title="回到顶部">↑</button>
+
+<script>
+// ═══ CITY STATE (shared) ═══
+let cityMode='tianjin';
+(function(){
+  const wh=document.getElementById('wuhan-header');
+  const gh=document.getElementById('guangzhou-end');
+  if(!wh)return;
+  function update(){
+    const wtop=wh.getBoundingClientRect().top;
+    const gtop=gh?gh.getBoundingClientRect().top:99999;
+    const vh=innerHeight;
+    if(gtop<vh*.5)cityMode='guangzhou';
+    else if(wtop<vh*.6)cityMode='wuhan';
+    else cityMode='tianjin';
+    const bd=document.body;
+    if(cityMode==='wuhan')bd.style.background='#1a0301';
+    else if(cityMode==='guangzhou')bd.style.background='#020e04';
+    else bd.style.background='#020515';
+  }
+  addEventListener('scroll',update,{passive:true});
+  update();
+})();
+
+// ═══ PARTICLES + S-CURVE + AMBIENT ═══
+(function(){
+  const cv=document.getElementById('particles'),ctx=cv.getContext('2d');
+  let W,H,P=[],t=0;
+
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  resize();addEventListener('resize',resize);
+
+  for(let i=0;i<120;i++){
+    P.push({
+      x:Math.random()*W,y:Math.random()*H,
+      r:Math.random()*2.5+.5,
+      vx:(Math.random()-.5)*.35,
+      vy:-(Math.random()*.5+.1),
+      life:Math.random()*500+250,age:Math.random()*500
+    });
+  }
+
+  function colorsFor(mode){
+    if(mode==='wuhan')return[
+      'rgba(210,100,60,','rgba(220,130,70,','rgba(255,150,90,'
+    ];
+    if(mode==='guangzhou')return[
+      'rgba(155,112,88,','rgba(140,100,75,','rgba(130,110,90,'
+    ];
+    return['rgba(232,180,86,','rgba(212,148,58,','rgba(255,210,130,'];
+  }
+
+  function ambientColors(mode){
+    if(mode==='wuhan')return[
+      'rgba(200,80,40,','rgba(180,60,30,','rgba(160,50,25,'
+    ];
+    if(mode==='guangzhou')return[
+      'rgba(140,100,70,','rgba(120,90,60,','rgba(100,80,55,'
+    ];
+    return['rgba(232,180,86,','rgba(210,150,60,','rgba(180,130,50,'];
+  }
+
+  function draw(){
+    t+=.004;
+    ctx.clearRect(0,0,W,H);
+
+    const amb=ambientColors(cityMode);
+    const cls=colorsFor(cityMode);
+
+    // Strong ambient washes — at edges, NOT center
+    // Top-left amber glow
+    let g=ctx.createRadialGradient(W*.14,H*.06+Math.sin(t*.8)*15,W*.06,W*.14,H*.06,H*.6);
+    g.addColorStop(0,amb[0]+'.28)');g.addColorStop(.3,amb[0]+'.12)');g.addColorStop(.65,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Top-right glow
+    g=ctx.createRadialGradient(W*.86,H*.04+Math.cos(t*.7)*18,W*.05,W*.86,H*.04,H*.55);
+    g.addColorStop(0,amb[0]+'.22)');g.addColorStop(.25,amb[0]+'.08)');g.addColorStop(.55,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Mid-left warm glow (stronger in wuhan)
+    const midL=cityMode==='wuhan'?'.28':'.10';
+    g=ctx.createRadialGradient(W*.1,H*.42+Math.sin(t*.5)*20,W*.06,W*.1,H*.42,H*.55);
+    g.addColorStop(0,amb[1]+midL);g.addColorStop(.35,amb[1]+'.06)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Mid-right glow
+    g=ctx.createRadialGradient(W*.9,H*.38+Math.cos(t*.6)*22,W*.05,W*.9,H*.38,H*.5);
+    g.addColorStop(0,amb[1]+(cityMode==='wuhan'?'.22':'.08)'));
+    g.addColorStop(.3,amb[1]+'.04)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Bottom-left
+    g=ctx.createRadialGradient(W*.12,H*.78+Math.sin(t*.4)*18,W*.06,W*.12,H*.78,H*.48);
+    g.addColorStop(0,amb[2]+'.20)');g.addColorStop(.3,amb[2]+'.06)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Bottom-right
+    g=ctx.createRadialGradient(W*.88,H*.82+Math.cos(t*.5)*20,W*.05,W*.88,H*.82,H*.42);
+    g.addColorStop(0,amb[2]+'.16)');g.addColorStop(.3,amb[2]+'.04)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Extra mid-section glow for depth (centered horizontally but at edges of content)
+    g=ctx.createRadialGradient(W*.5,H*.55+Math.sin(t*.35)*25,W*.25,W*.5,H*.55,H*.5);
+    g.addColorStop(0,amb[1]+'.04)');g.addColorStop(.5,'transparent');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Edge sparkles — tiny bright dots on both sides
+    for(let i=0;i<20;i++){
+      const sparkT=(t*Math.PI*2+.25*i)%(Math.PI*2);
+      const side=i%2===0?W*.05:W*.95;
+      const sparkY=(H*.08+(i/20)*H*.84+Math.sin(t*2+i)*45)%H;
+      const sparkA=.25+.35*Math.sin(sparkT);
+      ctx.beginPath();ctx.arc(side+Math.cos(t*3+i)*35,sparkY,1.8,0,Math.PI*2);
+      ctx.fillStyle=cls[i%3]+(sparkA)+')';ctx.fill();
+      // glow halo
+      ctx.beginPath();ctx.arc(side+Math.cos(t*3+i)*35,sparkY,7,0,Math.PI*2);
+      ctx.fillStyle=cls[i%3]+(sparkA*.22)+')';ctx.fill();
+    }
+
+    // Particles
+    for(let p of P){
+      p.age++;if(p.age>p.life){p.age=0;p.x=Math.random()*W;p.y=H+30}
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.y<-30)p.y=H+30;if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      const f=p.age<50?p.age/50:p.age>p.life-50?(p.life-p.age)/50:1;
+      const ci=Math.floor(Math.random()*cls.length);
+      const a=.38*f;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=cls[ci]+(a)+')';ctx.fill();
+      if(p.r>1.5){
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r*4,0,Math.PI*2);
+        ctx.fillStyle=cls[ci]+(a*.15)+')';ctx.fill();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══ ROUTE CANVAS — DOM-connected Catmull-Rom spline ═══
+(function(){
+  const cv=document.getElementById('route-canvas'),c=cv.getContext('2d');
+  let W,H;
+
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+  resize();addEventListener('resize',resize);
+
+  function catmullRom2Bezier(pts){
+    if(pts.length<2)return[];
+    const segs=[],n=pts.length;
+    for(let i=0;i<n-1;i++){
+      const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(n-1,i+2)];
+      const c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6;
+      const c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6;
+      segs.push({x1:p1.x,y1:p1.y,c1x,c1y,c2x,c2y,x2:p2.x,y2:p2.y});
+    }
+    return segs;
+  }
+
+  function collectAllMarkers(){
+    const markers=document.querySelectorAll('.day-marker');
+    const pts=[];
+    for(const m of markers){
+      const numEl=m.querySelector('.num');
+      const numR=numEl?numEl.getBoundingClientRect():m.getBoundingClientRect();
+      pts.push({
+        x:numR.left+numR.width/2,
+        y:numR.top+numR.height/2,
+        isReal:true
+      });
+    }
+    return pts;
+  }
+
+  function buildPath(pts){
+    // Build Catmull-Rom Bezier segments from a point array
+    return catmullRom2Bezier(pts);
+  }
+
+  function strokePath(c,segs){
+    c.beginPath();c.moveTo(segs[0].x1,segs[0].y1);
+    for(const s of segs)c.bezierCurveTo(s.c1x,s.c1y,s.c2x,s.c2y,s.x2,s.y2);
+  }
+
+  function strokeLine(c,x1,y1,x2,y2){
+    c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);
+  }
+
+  function drawCityBezier(c,segs,grad,width){
+    c.beginPath();c.moveTo(segs[0].x1,segs[0].y1);
+    for(const s of segs)c.bezierCurveTo(s.c1x,s.c1y,s.c2x,s.c2y,s.x2,s.y2);
+    c.strokeStyle=grad;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();
+  }
+
+  function drawCityLine(c,x1,y1,x2,y2,grad,width){
+    c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);
+    c.strokeStyle=grad;c.lineWidth=width;c.lineCap='round';c.stroke();
+  }
+
+  function drawPathLayers(c,segs,cityGrad){
+    // Layer 1: wide under-glow
+    drawCityBezier(c,segs,cityGrad(.10),28);
+    // Layer 2: dark core
+    drawCityBezier(c,segs,'rgba(60,30,10,.50)',12);
+    // Layer 3: warm mid
+    drawCityBezier(c,segs,'rgba(200,130,35,.55)',6);
+    // Layer 4: main line
+    drawCityBezier(c,segs,cityGrad(.85),3);
+    // Layer 5: bright specular
+    drawCityBezier(c,segs,'rgba(255,245,230,.35)',1.2);
+  }
+
+  function drawLineLayers(c,x1,y1,x2,y2,cityGrad){
+    drawCityLine(c,x1,y1,x2,y2,cityGrad(.10),28);
+    drawCityLine(c,x1,y1,x2,y2,'rgba(60,30,10,.50)',12);
+    drawCityLine(c,x1,y1,x2,y2,'rgba(200,130,35,.55)',6);
+    drawCityLine(c,x1,y1,x2,y2,cityGrad(.85),3);
+    drawCityLine(c,x1,y1,x2,y2,'rgba(255,245,230,.35)',1.2);
+  }
+
+  function drawMarkerDots(c,allMarkers,segmentCityBlend,t){
+    for(let i=0;i<allMarkers.length;i++){
+      const p=allMarkers[i];
+      const blend=segmentCityBlend(p.y);
+      const breathe=.6+.4*Math.sin(t*2.5+i*.9);
+      const [r,g,b]=blend.rgb;
+      const rad=breathe*12;
+      const dg=c.createRadialGradient(p.x,p.y,0,p.x,p.y,rad);
+      dg.addColorStop(0,`rgba(${r},${g},${b},${.65*breathe})`);
+      dg.addColorStop(.5,`rgba(${r},${g},${b},${.2*breathe})`);
+      dg.addColorStop(1,'transparent');
+      c.beginPath();c.arc(p.x,p.y,rad,0,Math.PI*2);
+      c.fillStyle=dg;c.fill();
+      c.beginPath();c.arc(p.x,p.y,2.5+.5*breathe,0,Math.PI*2);
+      c.fillStyle=`rgba(${r},${g},${b},${.7+.3*breathe})`;c.fill();
+    }
+  }
+
+  function drawFlowParticles(c,segs,segmentCityBlend,t,N_FLOW){
+    const samplePath=(tProg)=>{
+      const idx=Math.min(Math.floor(tProg*segs.length),segs.length-1);
+      const s=segs[idx];
+      const lt=tProg*segs.length-idx;
+      const u=1-lt,u2=u*u,u3=u2*u,lt2=lt*lt,lt3=lt2*lt;
+      return{
+        x:u3*s.x1+3*u2*lt*s.c1x+3*u*lt2*s.c2x+lt3*s.x2,
+        y:u3*s.y1+3*u2*lt*s.c1y+3*u*lt2*s.c2y+lt3*s.y2
+      };
+    };
+    for(let i=0;i<N_FLOW;i++){
+      const prog=((t*.06+i/N_FLOW)%1+1)%1;
+      const pos=samplePath(prog);
+      const blend=segmentCityBlend(pos.y);
+      const [fr,fg,fb]=blend.rgb;
+      const flowGrad=c.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,5);
+      flowGrad.addColorStop(0,`rgba(${fr},${fg},${fb},.7)`);
+      flowGrad.addColorStop(1,'transparent');
+      c.beginPath();c.arc(pos.x,pos.y,5,0,Math.PI*2);
+      c.fillStyle=flowGrad;c.fill();
+      c.beginPath();c.arc(pos.x,pos.y,1.2,0,Math.PI*2);
+      c.fillStyle=`rgba(${fr},${fg},${fb},.9)`;c.fill();
+    }
+  }
+
+  function draw(){
+    requestAnimationFrame(draw);
+    c.clearRect(0,0,W,H);
+    const t=performance.now()*.001;
+    const routeX=W*.10;
+
+    // ── Collect all markers ──
+    const allMarkers=collectAllMarkers();
+    if(allMarkers.length<2)return;
+
+    // ── City color helpers ──
+    const whTop=document.querySelector('.city-header.wuhan')?.getBoundingClientRect().top||H*.4;
+    const gzTop=document.querySelector('.end-section')?.getBoundingClientRect().top||H*.85;
+    const lerp=(a,b,f)=>a+(b-a)*f;
+    const tjRGB=[255,215,80],whRGB=[210,110,50],gzRGB=[180,135,85];
+
+    const segmentCityBlend=(midY)=>{
+      const whTs=whTop-H*.08,whTe=whTop+H*.04;
+      const gzTs=gzTop-H*.06,gzTe=gzTop+H*.02;
+      if(midY<whTs)return{t:0,rgb:tjRGB};
+      if(midY<whTe){
+        const f=(midY-whTs)/(whTe-whTs);
+        return{t:f,rgb:[Math.round(lerp(tjRGB[0],whRGB[0],f)),Math.round(lerp(tjRGB[1],whRGB[1],f)),Math.round(lerp(tjRGB[2],whRGB[2],f))]};
+      }
+      if(midY<gzTs)return{t:1,rgb:whRGB};
+      if(midY<gzTe){
+        const f=(midY-gzTs)/(gzTe-gzTs);
+        return{t:1+f,rgb:[Math.round(lerp(whRGB[0],gzRGB[0],f)),Math.round(lerp(whRGB[1],gzRGB[1],f)),Math.round(lerp(whRGB[2],gzRGB[2],f))]};
+      }
+      return{t:2,rgb:gzRGB};
+    };
+
+    const cityGrad=(alpha)=>{
+      const g=c.createLinearGradient(0,0,0,H);
+      const fade=.06;
+      const cl=(v)=>Math.max(0,Math.min(1,v)); // clamp to [0,1] for addColorStop
+      if(whTop>=H){
+        g.addColorStop(0,`rgba(232,180,86,${alpha})`);
+        g.addColorStop(1,`rgba(232,180,86,${alpha})`);
+      }else if(gzTop>=H){
+        g.addColorStop(0,`rgba(232,180,86,${alpha})`);
+        g.addColorStop(cl(whTop/H-fade),`rgba(232,180,86,${alpha})`);
+        g.addColorStop(cl(whTop/H+fade),`rgba(210,110,50,${alpha})`);
+        g.addColorStop(1,`rgba(210,110,50,${alpha})`);
+      }else{
+        if(whTop>0){
+          g.addColorStop(0,`rgba(232,180,86,${alpha})`);
+          g.addColorStop(cl(whTop/H-fade),`rgba(232,180,86,${alpha})`);
+          g.addColorStop(cl(whTop/H+fade),`rgba(210,110,50,${alpha})`);
+        }else{
+          g.addColorStop(0,`rgba(210,110,50,${alpha})`);
+        }
+        g.addColorStop(cl(gzTop/H-fade),`rgba(210,110,50,${alpha})`);
+        g.addColorStop(cl(gzTop/H+fade),`rgba(180,135,85,${alpha})`);
+        g.addColorStop(1,`rgba(180,135,85,${alpha})`);
+      }
+      return g;
+    };
+
+    // ── Markers at raw DOM x, with bridge anchor 叁→肆 to prevent overshoot ──
+    const tjMarkers = allMarkers.slice(0, 3);   // 壹贰叁
+    const whMarkers = allMarkers.slice(3);       // 肆伍陆柒捌
+
+    const tjEl = document.querySelector('.city-header.tianjin');
+    const gzEl = document.querySelector('.end-section');
+    const tjStartY = tjEl ? tjEl.getBoundingClientRect().bottom : 0;
+    const gzEndY = gzEl ? gzEl.getBoundingClientRect().top : H;
+
+    // Build single path:
+    //   virtual start → 壹→贰→叁 → [bridge] → 肆→伍→陆→柒→捌 → virtual end
+    const pts = [{x: routeX, y: tjStartY}];
+    for (const m of tjMarkers) pts.push({x: m.x, y: m.y});
+
+    // Bridge anchor at routeX halfway between 叁 and 肆
+    // 叁 and 肆 are both on the right side (day-inner.right).
+    // Without a bridge, Catmull-Rom tangents between two consecutive same-side
+    // markers with a ~100vh Y gap cause bezier overshoot off-screen.
+    // A routeX anchor breaks the tangent chain → no overshoot.
+    if (tjMarkers.length >= 3 && whMarkers.length >= 1) {
+      const p3 = tjMarkers[2], p4 = whMarkers[0];
+      pts.push({x: routeX, y: (p3.y + p4.y) / 2});
+    }
+
+    for (const m of whMarkers) pts.push({x: m.x, y: m.y});
+    pts.push({x: routeX, y: gzEndY});
+
+    const segs = catmullRom2Bezier(pts);
+
+    // ═══ RENDER ═══
+    if (segs.length > 0) drawPathLayers(c, segs, cityGrad);
+
+    // ── Marker dots ──
+    drawMarkerDots(c, allMarkers, segmentCityBlend, t);
+
+    // ── Flowing particles ──
+    drawFlowParticles(c, segs, segmentCityBlend, t, 8);
+  }
+  draw();
+})();
+
+// ═══ PROGRESS BAR ═══
+(function(){
+  const bar=document.getElementById('progress-bar');
+  if(!bar)return;
+  addEventListener('scroll',()=>{
+    const h=document.documentElement.scrollHeight-innerHeight;
+    bar.style.width=h>0?(scrollY/h*100)+'%':'0';
+  },{passive:true});
+})();
+
+// ═══ CITY DOTS ═══
+(function(){
+  const dots=document.querySelectorAll('#city-dots .city-dot');
+  if(!dots.length)return;
+
+  function updateDots(mode){
+    dots.forEach(d=>{
+      d.className='city-dot';
+      if(d.dataset.city===mode){
+        if(mode==='wuhan')d.classList.add('wuhan-active');
+        else if(mode==='guangzhou')d.classList.add('gz-active');
+        else d.classList.add('active');
+      }
+    });
+  }
+  // Click → scroll to city
+  dots.forEach(d=>{
+    d.addEventListener('click',()=>{
+      const city=d.dataset.city;
+      let target;
+      if(city==='tianjin')target=document.querySelector('.city-header.tianjin');
+      else if(city==='wuhan')target=document.getElementById('wuhan-header');
+      else if(city==='guangzhou')target=document.getElementById('guangzhou-end');
+      if(target)target.scrollIntoView({behavior:'smooth'});
+    });
+  });
+  // Sync with cityMode
+  setInterval(()=>{
+    updateDots(typeof cityMode!=='undefined'?cityMode:'tianjin');
+  },200);
+  updateDots('tianjin');
+})();
+
+// ═══ PER-SECTION SILHOUETTE TRIGGER ═══
+(function(){
+  const sections=document.querySelectorAll('.day-section');
+  sections.forEach(sec=>{
+    const sil=sec.querySelector('.card-silhouette');
+    if(!sil)return;
+    sec.addEventListener('mouseenter',()=>sil.classList.add('revealed'));
+    sec.addEventListener('mouseleave',()=>sil.classList.remove('revealed'));
+  });
+})();
+
+// ═══ BACK TO TOP ═══
+(function(){
+  const btn=document.getElementById('back-to-top');
+  if(!btn)return;
+  addEventListener('scroll',()=>{
+    if(scrollY>innerHeight)btn.classList.add('visible');
+    else btn.classList.remove('visible');
+  },{passive:true});
+  btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+})();
+
+// ═══ COUNT-UP NUMBER ANIMATION ═══
+(function(){
+  const stats=document.querySelector('.stats-row');
+  if(!stats)return;
+  const nums=stats.querySelectorAll('.stat-num');
+  const targets=[];
+  nums.forEach(n=>{
+    const raw=n.textContent.replace(/[^0-9]/g,'');
+    const prefix=n.textContent.startsWith('~')?'~':'';
+    const suffix=n.textContent.includes(',')?',000':'';
+    targets.push({el:n,val:parseInt(raw)||0,prefix,suffix});
+    n.textContent=prefix+'0'+suffix;
+  });
+  let animated=false;
+  const o=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting&&!animated){
+        animated=true;
+        const dur=1500,start=performance.now();
+        function tick(now){
+          const p=Math.min((now-start)/dur,1);
+          const ease=1-Math.pow(1-p,3);
+          targets.forEach(t=>{
+            const v=Math.round(t.val*ease);
+            t.el.textContent=t.prefix+v.toLocaleString()+t.suffix;
+          });
+          if(p<1)requestAnimationFrame(tick);
+          else{
+            targets.forEach((t,i)=>{
+              t.el.textContent=t.prefix+t.val.toLocaleString()+t.suffix;
+              setTimeout(()=>{
+                t.el.classList.add('count-popped');
+                setTimeout(()=>t.el.classList.remove('count-popped'),600);
+              },i*120);
+            });
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+    });
+  },{threshold:.3});
+  o.observe(stats);
+})();
+
+// ═══ SCROLL REVEAL ═══
+(function(){
+  const o=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+  },{threshold:.15});
+  document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>{
+    o.observe(el);
+    const r=el.getBoundingClientRect();
+    if(r.top<innerHeight&&r.bottom>0)el.classList.add('visible');
+  });
+})();
+
+// ═══ CITY CHAR PARALLAX ═══
+(function(){
+  const cs=document.querySelectorAll('.city-char,.end-city-char');
+  addEventListener('scroll',()=>{
+    cs.forEach(el=>{
+      const r=el.getBoundingClientRect(),vh=innerHeight;
+      el.style.transform='translate(-50%,-50%) translateY('+((r.top+r.height/2-vh/2)/vh*35)+'px)';
+    });
+  },{passive:true});
+})();
+</script>
+<!-- ═══ SVG SILHOUETTE DEFINITIONS (8 unique) ═══ -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff0a0"/>
+      <stop offset="20%" stop-color="#e8c840"/>
+      <stop offset="45%" stop-color="#b08020"/>
+      <stop offset="55%" stop-color="#e0c040"/>
+      <stop offset="80%" stop-color="#c49820"/>
+      <stop offset="100%" stop-color="#f0d860"/>
+    </linearGradient>
+  </defs>
+  <!-- 天津 Day1 · 解放桥 -->
+  <g id="sil-tj-1">
+    <rect x="90" y="180" width="22" height="220" rx="3"/>
+    <rect x="288" y="180" width="22" height="220" rx="3"/>
+    <rect x="30" y="350" width="340" height="12" rx="2"/>
+    <line x1="101" y1="180" x2="30" y2="350" stroke-width="2.5"/>
+    <line x1="101" y1="180" x2="170" y2="350" stroke-width="2.5"/>
+    <line x1="299" y1="180" x2="230" y2="350" stroke-width="2.5"/>
+    <line x1="299" y1="180" x2="370" y2="350" stroke-width="2.5"/>
+    <!-- 桥面护栏竖线 -->
+    <line x1="40" y1="345" x2="40" y2="325" stroke-width="1.5" opacity=".5"/>
+    <line x1="60" y1="345" x2="60" y2="325" stroke-width="1.5" opacity=".5"/>
+    <line x1="140" y1="348" x2="140" y2="330" stroke-width="1.5" opacity=".5"/>
+    <line x1="160" y1="348" x2="160" y2="330" stroke-width="1.5" opacity=".5"/>
+    <line x1="240" y1="348" x2="240" y2="330" stroke-width="1.5" opacity=".5"/>
+    <line x1="260" y1="348" x2="260" y2="330" stroke-width="1.5" opacity=".5"/>
+    <line x1="340" y1="345" x2="340" y2="325" stroke-width="1.5" opacity=".5"/>
+    <line x1="360" y1="345" x2="360" y2="325" stroke-width="1.5" opacity=".5"/>
+    <!-- 钢桁交叉线 -->
+    <line x1="112" y1="250" x2="170" y2="348" stroke-width="1" opacity=".35"/>
+    <line x1="112" y1="250" x2="30" y2="348" stroke-width="1" opacity=".35"/>
+    <line x1="288" y1="250" x2="230" y2="348" stroke-width="1" opacity=".35"/>
+    <line x1="288" y1="250" x2="370" y2="348" stroke-width="1" opacity=".35"/>
+    <circle cx="299" cy="150" r="22" fill="none" stroke-width="4"/>
+    <line x1="299" y1="128" x2="299" y2="172" stroke-width="2.5"/>
+    <line x1="277" y1="150" x2="321" y2="150" stroke-width="2.5"/>
+    <!-- 钟面刻度 -->
+    <line x1="299" y1="132" x2="299" y2="138" stroke-width="1.5" opacity=".6"/>
+    <line x1="299" y1="162" x2="299" y2="168" stroke-width="1.5" opacity=".6"/>
+    <line x1="281" y1="150" x2="287" y2="150" stroke-width="1.5" opacity=".6"/>
+    <line x1="311" y1="150" x2="317" y2="150" stroke-width="1.5" opacity=".6"/>
+    <circle cx="299" cy="150" r="6"/>
+    <rect x="85" y="395" width="230" height="8" rx="2" opacity=".5"/>
+  </g>
+  <!-- 天津 Day2 · 天津之眼 -->
+  <g id="sil-tj-2">
+    <polygon points="150,420 200,200 250,420" opacity=".85"/>
+    <circle cx="200" cy="180" r="80" fill="none" stroke-width="5"/>
+    <!-- 主辐条 8 条 -->
+    <line x1="200" y1="100" x2="200" y2="260" stroke-width="2.5"/>
+    <line x1="120" y1="180" x2="280" y2="180" stroke-width="2.5"/>
+    <line x1="143" y1="123" x2="257" y2="237" stroke-width="2"/>
+    <line x1="257" y1="123" x2="143" y2="237" stroke-width="2"/>
+    <line x1="170" y1="106" x2="230" y2="254" stroke-width="1.5" opacity=".5"/>
+    <line x1="230" y1="106" x2="170" y2="254" stroke-width="1.5" opacity=".5"/>
+    <line x1="110" y1="155" x2="290" y2="205" stroke-width="1.5" opacity=".5"/>
+    <line x1="110" y1="205" x2="290" y2="155" stroke-width="1.5" opacity=".5"/>
+    <!-- 外缘轿厢 -->
+    <circle cx="200" cy="100" r="5" opacity=".7"/>
+    <circle cx="256" cy="122" r="5" opacity=".7"/>
+    <circle cx="280" cy="180" r="5" opacity=".7"/>
+    <circle cx="256" cy="238" r="5" opacity=".7"/>
+    <circle cx="200" cy="260" r="5" opacity=".7"/>
+    <circle cx="144" cy="238" r="5" opacity=".7"/>
+    <circle cx="120" cy="180" r="5" opacity=".7"/>
+    <circle cx="144" cy="122" r="5" opacity=".7"/>
+    <!-- 轮毂 -->
+    <circle cx="200" cy="180" r="10"/>
+    <circle cx="200" cy="180" r="4" opacity=".5"/>
+    <!-- 底座横梁 -->
+    <line x1="140" y1="420" x2="260" y2="420" stroke-width="3" opacity=".5"/>
+  </g>
+  <!-- 天津 Day3 · 世纪钟 + 洋楼 -->
+  <g id="sil-tj-3">
+    <!-- 钟楼 -->
+    <rect x="240" y="140" width="44" height="150" rx="3"/>
+    <circle cx="262" cy="200" r="26" fill="none" stroke-width="4"/>
+    <line x1="262" y1="174" x2="262" y2="210" stroke-width="3"/>
+    <line x1="246" y1="200" x2="278" y2="200" stroke-width="2"/>
+    <!-- 钟面刻度 -->
+    <line x1="262" y1="178" x2="262" y2="183" stroke-width="1.5" opacity=".6"/>
+    <line x1="262" y1="217" x2="262" y2="222" stroke-width="1.5" opacity=".6"/>
+    <line x1="250" y1="200" x2="255" y2="200" stroke-width="1.5" opacity=".6"/>
+    <line x1="269" y1="200" x2="274" y2="200" stroke-width="1.5" opacity=".6"/>
+    <!-- 洋楼主体 -->
+    <rect x="70" y="210" width="100" height="200" rx="2"/>
+    <rect x="80" y="185" width="80" height="25" rx="2"/>
+    <!-- 窗户网格 2行×3列 -->
+    <rect x="82" y="225" width="18" height="22" rx="1" opacity=".6"/>
+    <rect x="110" y="225" width="18" height="22" rx="1" opacity=".6"/>
+    <rect x="138" y="225" width="18" height="22" rx="1" opacity=".6"/>
+    <rect x="82" y="262" width="18" height="22" rx="1" opacity=".6"/>
+    <rect x="110" y="262" width="18" height="22" rx="1" opacity=".6"/>
+    <rect x="138" y="262" width="18" height="22" rx="1" opacity=".6"/>
+    <!-- 门 -->
+    <rect x="105" y="320" width="28" height="38" rx="2" opacity=".5"/>
+    <!-- 屋顶烟囱 -->
+    <rect x="95" y="170" width="8" height="18" rx="1" opacity=".6"/>
+    <rect x="135" y="175" width="7" height="13" rx="1" opacity=".5"/>
+    <!-- 地面 -->
+    <rect x="65" y="400" width="230" height="8" rx="2" opacity=".4"/>
+  </g>
+  <!-- 武汉 Day4 · 黄鹤楼 -->
+  <g id="sil-wh-1">
+    <rect x="70" y="410" width="260" height="14" rx="2"/>
+    <!-- 层4(底) -->
+    <polygon points="90,300 180,312 220,312 310,300 285,380 115,380" opacity=".85"/>
+    <!-- 飞檐翘角 -->
+    <line x1="90" y1="300" x2="70" y2="295" stroke-width="2" opacity=".5"/>
+    <line x1="310" y1="300" x2="330" y2="295" stroke-width="2" opacity=".5"/>
+    <!-- 层3 -->
+    <polygon points="115,210 185,222 215,222 285,210 260,300 140,300" opacity=".85"/>
+    <line x1="115" y1="210" x2="95" y2="205" stroke-width="2" opacity=".5"/>
+    <line x1="285" y1="210" x2="305" y2="205" stroke-width="2" opacity=".5"/>
+    <!-- 层2 -->
+    <polygon points="135,140 190,150 210,150 265,140 248,210 152,210" opacity=".85"/>
+    <line x1="135" y1="140" x2="118" y2="136" stroke-width="2" opacity=".5"/>
+    <line x1="265" y1="140" x2="282" y2="136" stroke-width="2" opacity=".5"/>
+    <!-- 层1(顶) -->
+    <polygon points="155,80 195,88 205,88 245,80 235,140 165,140" opacity=".85"/>
+    <line x1="155" y1="80" x2="140" y2="77" stroke-width="2" opacity=".5"/>
+    <line x1="245" y1="80" x2="260" y2="77" stroke-width="2" opacity=".5"/>
+    <!-- 层间立柱 -->
+    <line x1="150" y1="300" x2="148" y2="210" stroke-width="1.5" opacity=".35"/>
+    <line x1="200" y1="310" x2="200" y2="220" stroke-width="1.5" opacity=".35"/>
+    <line x1="250" y1="300" x2="252" y2="210" stroke-width="1.5" opacity=".35"/>
+    <line x1="165" y1="210" x2="162" y2="140" stroke-width="1.5" opacity=".35"/>
+    <line x1="200" y1="220" x2="200" y2="148" stroke-width="1.5" opacity=".35"/>
+    <line x1="235" y1="210" x2="238" y2="140" stroke-width="1.5" opacity=".35"/>
+    <!-- 尖顶 -->
+    <rect x="193" y="30" width="14" height="50" rx="2"/>
+    <polygon points="200,5 186,30 214,30"/>
+    <!-- 基座台阶 -->
+    <rect x="80" y="385" width="240" height="5" rx="1" opacity=".35"/>
+    <rect x="90" y="392" width="220" height="5" rx="1" opacity=".25"/>
+    <!-- 地面阴影 -->
+    <ellipse cx="200" cy="415" rx="150" ry="8" opacity=".2"/>
+  </g>
+  <!-- 武汉 Day5 · 长江大桥 -->
+  <g id="sil-wh-2">
+    <rect x="70" y="130" width="26" height="210" rx="2"/>
+    <rect x="304" y="130" width="26" height="210" rx="2"/>
+    <!-- 桥墩横梁 -->
+    <line x1="70" y1="200" x2="96" y2="200" stroke-width="2" opacity=".5"/>
+    <line x1="70" y1="270" x2="96" y2="270" stroke-width="2" opacity=".5"/>
+    <line x1="304" y1="200" x2="330" y2="200" stroke-width="2" opacity=".5"/>
+    <line x1="304" y1="270" x2="330" y2="270" stroke-width="2" opacity=".5"/>
+    <rect x="30" y="300" width="340" height="14" rx="2"/>
+    <!-- 主斜拉索 -->
+    <line x1="83" y1="130" x2="30" y2="300" stroke-width="2.5"/>
+    <line x1="83" y1="130" x2="160" y2="300" stroke-width="2.5"/>
+    <line x1="317" y1="130" x2="240" y2="300" stroke-width="2.5"/>
+    <line x1="317" y1="130" x2="370" y2="300" stroke-width="2.5"/>
+    <!-- 辅助斜拉索 -->
+    <line x1="83" y1="160" x2="90" y2="300" stroke-width="1.5" opacity=".4"/>
+    <line x1="317" y1="160" x2="310" y2="300" stroke-width="1.5" opacity=".4"/>
+    <!-- 桥面护栏 -->
+    <line x1="38" y1="300" x2="38" y2="285" stroke-width="1.5" opacity=".45"/>
+    <line x1="60" y1="300" x2="60" y2="285" stroke-width="1.5" opacity=".45"/>
+    <line x1="180" y1="300" x2="180" y2="285" stroke-width="1.5" opacity=".45"/>
+    <line x1="220" y1="300" x2="220" y2="285" stroke-width="1.5" opacity=".45"/>
+    <line x1="340" y1="300" x2="340" y2="285" stroke-width="1.5" opacity=".45"/>
+    <line x1="362" y1="300" x2="362" y2="285" stroke-width="1.5" opacity=".45"/>
+    <!-- 江水波纹 -->
+    <path d="M0,370 Q100,355 200,370 Q300,385 400,370 L400,480 L0,480 Z" opacity=".25"/>
+    <path d="M0,390 Q120,380 240,392 Q340,402 400,390" fill="none" stroke-width="1" opacity=".15"/>
+    <path d="M0,410 Q130,405 260,415 Q340,420 400,410" fill="none" stroke-width="1" opacity=".1"/>
+  </g>
+  <!-- 武汉 Day6 · 曾侯乙编钟 -->
+  <g id="sil-wh-3">
+    <!-- 框架 -->
+    <rect x="100" y="120" width="14" height="300" rx="2"/>
+    <rect x="286" y="120" width="14" height="300" rx="2"/>
+    <rect x="100" y="105" width="200" height="16" rx="2"/>
+    <!-- 横梁雕刻 -->
+    <line x1="110" y1="113" x2="290" y2="113" stroke-width="1" opacity=".4"/>
+    <!-- 上排编钟 -->
+    <ellipse cx="150" cy="240" rx="22" ry="32" fill="none" stroke-width="3.5"/>
+    <ellipse cx="200" cy="210" rx="19" ry="28" fill="none" stroke-width="3.5"/>
+    <ellipse cx="250" cy="180" rx="16" ry="24" fill="none" stroke-width="3.5"/>
+    <!-- 钟面纹饰 -->
+    <line x1="140" y1="240" x2="160" y2="240" stroke-width="1" opacity=".35"/>
+    <line x1="192" y1="210" x2="208" y2="210" stroke-width="1" opacity=".35"/>
+    <line x1="243" y1="180" x2="257" y2="180" stroke-width="1" opacity=".35"/>
+    <!-- 下排编钟 -->
+    <ellipse cx="150" cy="340" rx="26" ry="38" fill="none" stroke-width="3.5"/>
+    <ellipse cx="200" cy="310" rx="22" ry="32" fill="none" stroke-width="3.5"/>
+    <ellipse cx="250" cy="280" rx="19" ry="28" fill="none" stroke-width="3.5"/>
+    <!-- 钟面纹饰 -->
+    <line x1="138" y1="340" x2="162" y2="340" stroke-width="1" opacity=".35"/>
+    <line x1="191" y1="310" x2="209" y2="310" stroke-width="1" opacity=".35"/>
+    <line x1="242" y1="280" x2="258" y2="280" stroke-width="1" opacity=".35"/>
+    <!-- 底座 -->
+    <rect x="80" y="415" width="240" height="8" rx="2" opacity=".35"/>
+  </g>
+  <!-- 武汉 Day7 · 东湖亭台 -->
+  <g id="sil-wh-4">
+    <!-- 主亭 -->
+    <polygon points="160,200 200,150 240,200" opacity=".85"/>
+    <!-- 飞檐翘角 -->
+    <line x1="160" y1="200" x2="145" y2="196" stroke-width="2" opacity=".5"/>
+    <line x1="240" y1="200" x2="255" y2="196" stroke-width="2" opacity=".5"/>
+    <rect x="150" y="200" width="100" height="8" rx="1"/>
+    <!-- 横枋 -->
+    <line x1="165" y1="204" x2="235" y2="204" stroke-width="1" opacity=".4"/>
+    <rect x="170" y="208" width="12" height="90" rx="1"/>
+    <rect x="218" y="208" width="12" height="90" rx="1"/>
+    <rect x="140" y="295" width="120" height="12" rx="2"/>
+    <!-- 水面 -->
+    <path d="M0,340 Q100,325 200,340 Q300,355 400,340 L400,480 L0,480 Z" opacity=".18"/>
+    <!-- 水纹 -->
+    <path d="M60,365 Q130,358 200,368 Q270,378 340,365" fill="none" stroke-width="1" opacity=".12"/>
+    <path d="M80,395 Q160,390 240,398 Q320,405 380,395" fill="none" stroke-width="1" opacity=".08"/>
+    <!-- 远处树影 -->
+    <polygon points="60,190 85,110 110,190" opacity=".5"/>
+    <polygon points="290,200 315,120 340,200" opacity=".5"/>
+    <polygon points="330,195 350,130 370,195" opacity=".35"/>
+    <!-- 柳枝 -->
+    <path d="M65,200 Q55,260 80,310" fill="none" stroke-width="1.5" opacity=".3"/>
+    <path d="M100,195 Q95,250 105,290" fill="none" stroke-width="1" opacity=".25"/>
+    <path d="M300,205 Q310,270 290,320" fill="none" stroke-width="1.5" opacity=".3"/>
+  </g>
+  <!-- 武汉 Day8 · 古德寺 -->
+  <g id="sil-wh-5">
+    <!-- 主穹顶 -->
+    <path d="M130,300 Q130,110 200,60 Q270,110 270,300 Z" opacity=".85"/>
+    <!-- 穹顶纹饰横线 -->
+    <path d="M142,170 Q200,150 258,170" fill="none" stroke-width="1" opacity=".3"/>
+    <path d="M146,210 Q200,195 254,210" fill="none" stroke-width="1" opacity=".3"/>
+    <path d="M148,255 Q200,245 252,255" fill="none" stroke-width="1" opacity=".25"/>
+    <!-- 尖顶 -->
+    <rect x="194" y="25" width="12" height="40" rx="1"/>
+    <polygon points="200,5 188,28 212,28"/>
+    <!-- 双塔 -->
+    <rect x="90" y="250" width="34" height="60" rx="2"/>
+    <rect x="276" y="250" width="34" height="60" rx="2"/>
+    <!-- 塔身窗户 -->
+    <rect x="100" y="262" width="14" height="16" rx="1" opacity=".5"/>
+    <rect x="100" y="286" width="14" height="16" rx="1" opacity=".5"/>
+    <rect x="286" y="262" width="14" height="16" rx="1" opacity=".5"/>
+    <rect x="286" y="286" width="14" height="16" rx="1" opacity=".5"/>
+    <!-- 塔顶小穹顶 -->
+    <path d="M90,250 Q107,200 124,250 Z" opacity=".65"/>
+    <path d="M276,250 Q293,200 310,250 Z" opacity=".65"/>
+    <!-- 台阶 -->
+    <rect x="60" y="305" width="280" height="14" rx="2"/>
+    <rect x="70" y="318" width="260" height="6" rx="1" opacity=".35"/>
+    <rect x="80" y="326" width="240" height="5" rx="1" opacity=".2"/>
+  </g>
+  <!-- 广州 · 广州塔 -->
+  <g id="sil-gz">
+    <path d="M168,80 Q200,230 155,330 Q130,400 168,455 L232,455 Q270,400 245,330 Q200,230 232,80 Z" opacity=".85"/>
+    <rect x="197" y="20" width="6" height="65" rx="1"/>
+    <ellipse cx="200" cy="330" rx="30" ry="6" fill="none" stroke-width="3.5"/>
+    <ellipse cx="200" cy="130" rx="38" ry="9" opacity=".45"/>
+    <ellipse cx="200" cy="455" rx="55" ry="7" opacity=".3"/>
+    <line x1="200" y1="28" x2="200" y2="8" stroke-width="2" opacity=".6"/>
+  </g>
+</svg>
+</body>
+</html>
